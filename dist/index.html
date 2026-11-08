@@ -1,0 +1,686 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#0a0c0b" />
+    <meta
+      name="description"
+      content="Combat Protocol — نسخة لعب FPS أصلية قابلة للعب في المتصفح، مستوحاة من أسلوب ألعاب القتال التكتيكية."
+    />
+    <title>Combat Protocol — بروتوكول القتال</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/multiplayer.css" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%230a0c0b'/%3E%3Cpath d='M14 44V20h8l10 14 10-14h8v24h-7V31l-11 15-11-15v13z' fill='%23d9a45c'/%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    <div class="boot" id="boot">
+      <div class="boot-inner">
+        <span class="boot-mark">CP—01</span>
+        <div class="boot-line"><i></i></div>
+        <p id="boot-text">تهيئة ساحة القتال…</p>
+      </div>
+    </div>
+
+    <main class="app" id="app">
+      <canvas id="canvas" tabindex="0" aria-label="ساحة اللعب"></canvas>
+
+      <div class="hud" id="hud" aria-hidden="true">
+        <div class="hud-top">
+          <div class="hud-brand">
+            <span class="hud-mark">CP—01</span>
+            <span class="hud-live"><i></i> LIVE</span>
+          </div>
+
+          <div class="hud-timer">
+            <span class="hud-label">الوقت المتبقي</span>
+            <strong id="timer">05:00</strong>
+          </div>
+
+          <div class="hud-score">
+            <span class="hud-label">النقاط</span>
+            <strong id="score">0000</strong>
+            <span class="hud-sub"><b id="alive-count">5</b> أعداء نشطون</span>
+          </div>
+
+           <div class="hud-mode">
+             <span class="hud-label">الطور</span>
+             <strong id="mode-label">Deathmatch</strong>
+             <span class="hud-sub" id="zone-status">المهمة الأساسية</span>
+           </div>
+           <div class="objective-panel" id="objective-panel">
+             <span class="hud-label">الهدف الحالي</span>
+             <strong id="objective-label">أعلى نقاط قبل نهاية الوقت</strong>
+             <span class="objective-detail" id="objective-detail">المهمة الأساسية</span>
+             <div class="objective-progress"><i id="objective-progress-fill"></i></div>
+           </div>
+
+          <div class="hud-map">
+            <canvas id="minimap" width="184" height="136" aria-label="خريطة مصغرة"></canvas>
+            <span class="map-label" id="map-label">ميناء ميريديان</span>
+          </div>
+        </div>
+
+        <div class="killfeed" id="killfeed" aria-live="polite"></div>
+
+        <div class="crosshair" id="crosshair" aria-hidden="true">
+          <span class="ch-top"></span>
+          <span class="ch-bottom"></span>
+          <span class="ch-left"></span>
+          <span class="ch-right"></span>
+          <span class="ch-dot"></span>
+        </div>
+        <div class="hitmarker" id="hitmarker" aria-hidden="true">×</div>
+
+        <div class="hud-bottom">
+          <div class="vitals">
+            <div class="vital">
+              <div class="vital-head"><span class="hud-label">صحة</span><b id="health-value">100</b></div>
+              <div class="bar"><i id="health-bar"></i></div>
+            </div>
+            <div class="vital">
+              <div class="vital-head"><span class="hud-label">درع</span><b id="armor-value">50</b></div>
+              <div class="bar bar-armor"><i id="armor-bar"></i></div>
+            </div>
+             <div class="hud-meta">
+               <span>دقة <b id="accuracy">0%</b></span>
+               <span>نمط <b id="hud-mode-label">Deathmatch</b></span>
+               <span>مستوى <b id="hud-level">1</b></span>
+               <span id="regen-status">استعادة جاهزة</span>
+             </div>
+          </div>
+
+          <div class="weapon-hud">
+            <div class="weapon-copy">
+              <span class="hud-label" id="weapon-role">بندقية هجومية</span>
+              <strong id="weapon-name">AR-4</strong>
+            </div>
+             <div class="ammo">
+               <span id="ammo">30</span><span class="ammo-sep">/</span><span id="reserve">150</span>
+             </div>
+             <div class="grenade-count">قنابل <b id="grenade-count">2</b></div>
+             <div class="reload-wrap" id="reload-wrap"><i id="reload-fill"></i></div>
+          </div>
+
+          <div class="weapon-slots" id="weapon-slots" aria-label="الأسلحة"></div>
+        </div>
+
+        <div class="hit-vignette" id="hit-vignette" aria-hidden="true"></div>
+        <div class="damage-arcs" id="damage-arcs" aria-hidden="true"></div>
+        <div class="ability-hud is-ready" id="ability-hud" aria-hidden="true">
+          <kbd>Q</kbd>
+          <span class="ability-name" id="ability-name">—</span>
+          <div class="ability-bar"><i id="ability-fill"></i></div>
+        </div>
+        <div class="scope" id="scope" aria-hidden="true">
+          <div class="scope-ring"></div>
+          <div class="scope-cross"></div>
+          <span class="scope-label" id="scope-label">DMR—7 // 2.4×</span>
+        </div>
+        <div class="hud-message" id="hud-message" aria-live="polite"></div>
+        <div class="loot-prompt" id="loot-prompt" hidden></div>
+        <div class="drop-hud" id="drop-hud" hidden></div>
+        <div class="loot-summary" id="loot-summary"></div>
+
+        <div class="mp-hud" id="mp-hud" hidden>
+          <div class="mp-hud-log" id="mp-hud-log"></div>
+          <div class="mp-hud-row">
+            <input id="mp-hud-input" maxlength="120" placeholder="Enter للدردشة..." autocomplete="off" />
+            <button id="mp-hud-send" type="button">إرسال</button>
+          </div>
+        </div>
+
+        <div class="lock-hint" id="lock-hint">
+          <span>انقر لالتقاط الماوس</span>
+           <small>WASD للحركة · زر الماوس الأيسر للإطلاق · R للتلقيم · G للقنبلة</small>
+        </div>
+      </div>
+
+      <section class="screen menu-screen" id="menu">
+        <div class="screen-grid" aria-hidden="true"></div>
+        <header class="menu-top">
+          <div class="menu-brand">
+            <span class="kicker">CP — 01 / TACTICAL PROTOCOL</span>
+            <span class="menu-status"><i></i> FIELD BUILD · v2.0.0 / PROTOCOL EVOLVED</span>
+          </div>
+          <nav class="lobby-nav" id="lobby-nav">
+            <button class="nav-tab is-active" id="nav-play" type="button">الرئيسية 🎯</button>
+            <button class="nav-tab" id="nav-store" type="button">المتجر 🛒</button>
+            <button class="nav-tab" id="nav-crates" type="button">صناديق الحظ 🎁</button>
+            <button class="nav-tab" id="nav-gun-lab" type="button">معمل الأسلحة 🧪</button>
+            <button class="nav-tab" id="nav-armory" type="button">الترسانة ⚔️</button>
+            <button class="nav-tab" id="nav-pass" type="button">بطاقة المعركة 🎖️</button>
+            <button class="nav-tab" id="nav-friends" type="button">الأصدقاء 👥</button>
+            <button class="nav-tab" id="nav-mp" type="button">اللعب الجماعي 🌐</button>
+            <button class="nav-tab" id="nav-settings" type="button">الإعدادات ⚙️</button>
+          </nav>
+          <div class="lobby-profile-badge" id="lobby-profile-badge">
+            <div class="badge-avatar" id="badge-avatar">🎖️</div>
+            <div class="badge-info">
+              <div class="badge-row">
+                <strong id="badge-name">Player</strong>
+                <span class="badge-rank" id="badge-rank">مستجد</span>
+                <span class="badge-level" id="badge-level">LVL 1</span>
+              </div>
+              <div class="badge-tier" id="badge-tier">
+                <span id="badge-tier-icon">⚡</span> <b id="badge-tier-title">برونزي V</b> · <span id="badge-rp-val">1200 RP</span>
+              </div>
+              <div class="badge-xp-bar"><i id="badge-xp-fill" style="width: 20%;"></i></div>
+              <div class="badge-credits">💳 <b id="badge-credits-val">0</b> نقطة | 🧪 <b id="badge-materials-val">0</b> مواد</div>
+            </div>
+          </div>
+        </header>
+
+        <div class="menu-main">
+          <div class="menu-copy">
+            <p class="kicker">نسخة أصلية مستوحاة من أسلوب القتال التكتيكي</p>
+            <h1>COMBAT<br /><em>PROTOCOL</em></h1>
+            <p class="menu-lede">
+               خمسة أطوار لعب، تسعة أسلحة، أربع Operators، خمس خرائط، ومرفقات قابلة للتجهيز، مع مهمة First Light سردية محلية. كل الساحات مبنية من الصفر — بدون أصول أو شعارات من اللعبة الأصلية.
+              التقط الماوس، ثبّت زواياك، ولا تترك المركز.
+            </p>
+            <div class="menu-actions">
+              <button class="btn btn-primary" id="start-button" type="button">
+                <span>ابدأ المهمة</span>
+                <span class="btn-arrow">←</span>
+              </button>
+              <button class="btn btn-quiet" id="store-button" type="button">المتجر 🛒</button>
+              <button class="btn btn-quiet" id="crates-button" type="button">صناديق الحظ 🎁</button>
+              <button class="btn btn-quiet" id="gun-lab-button" type="button">معمل الأسلحة 🧪</button>
+              <button class="btn btn-quiet" id="armory-button" type="button">الترسانة والتطوير</button>
+              <button class="btn btn-quiet" id="pass-button" type="button">بطاقة المعركة 🎖️</button>
+              <button class="btn btn-quiet" id="friends-button" type="button">الأصدقاء 👥</button>
+              <button class="btn btn-quiet" id="multiplayer-button" type="button">اللعب الجماعي</button>
+              <button class="btn btn-quiet" id="mode-button" type="button">اختيار الطور</button>
+              <button class="btn btn-quiet" id="how-button" type="button">طريقة اللعب</button>
+              <button class="btn btn-quiet" id="settings-button" type="button">الإعدادات</button>
+            </div>
+            <label class="menu-map-picker" for="menu-map-select">
+              <span>
+                <b>الخريطة الحالية</b>
+                <small id="menu-map-current">ميناء ميريديان</small>
+              </span>
+              <select id="menu-map-select" aria-label="اختيار الخريطة"></select>
+            </label>
+            <div class="menu-stats">
+               <div><b>05</b><span>أطوار لعب</span></div>
+                 <div><b>09</b><span>أسلحة</span></div>
+                 <div><b>05</b><span>خرائط</span></div>
+                 <div><b>11</b><span>مرفقات</span></div>
+            </div>
+          </div>
+
+          <aside class="menu-aside">
+            <div class="panel">
+              <div class="panel-head"><span class="kicker">BRIEFING</span><span class="panel-index">01</span></div>
+              <p>
+                ساحة حاويات ضيقة. الأعداء يتحركون ويطلقون النار. استخدم الحاويات كغطاء، وبدّل السلاح حسب المسافة:
+                الرشاش للقريب، البندقية للمتوسط، القناصة للخطوط الطويلة.
+              </p>
+              <div class="panel-rule"></div>
+              <div class="controls-grid">
+                <div><kbd>W A S D</kbd><span>حركة</span></div>
+                <div><kbd>MOUSE</kbd><span>نظر</span></div>
+                <div><kbd>LMB</kbd><span>تصويب</span></div>
+                <div><kbd>RMB</kbd><span>تسديد</span></div>
+                <div><kbd>R</kbd><span>تلقيم</span></div>
+                <div><kbd>SHIFT</kbd><span>جري</span></div>
+                 <div><kbd>SPACE</kbd><span>قفز</span></div>
+                 <div><kbd>E</kbd><span>تفاعل / هدف</span></div>
+                  <div><kbd>1 — 9</kbd><span>تبديل السلاح</span></div>
+              </div>
+            </div>
+
+            <div class="menu-note">
+              <span class="note-mark">!</span>
+              <p>
+                لعبة أصلية للعرض التقني. لا تُضمّن أي أصول، أصوات، خرائط، أو علامات تجارية من Combat Master.
+              </p>
+            </div>
+
+            <!-- PUBG World Chat Widget in Lobby -->
+            <div class="lobby-chat-widget" id="lobby-chat-widget">
+              <div class="chat-header">
+                <span class="chat-title">الدردشة الحية 💬</span>
+                <div class="chat-tabs">
+                  <button class="chat-tab is-active" id="chat-tab-world" type="button">العام 🌐</button>
+                  <button class="chat-tab" id="chat-tab-squad" type="button">الفريق 👥</button>
+                  <button class="chat-tab" id="chat-tab-recruit" type="button">تجنيد 📢</button>
+                </div>
+              </div>
+              <div class="chat-messages" id="chat-messages"></div>
+              <div class="quick-chat-bar" id="quick-chat-bar"></div>
+              <form class="chat-input-row" id="chat-form">
+                <input id="chat-input" maxlength="100" placeholder="اكتب رسالة للدردشة..." autocomplete="off" />
+                <button class="btn btn-primary" id="chat-send-btn" type="submit" style="padding: 6px 14px; font-size: 13px;">إرسال</button>
+              </form>
+            </div>
+          </aside>
+        </div>
+
+        <footer class="menu-footer">
+          <span>FIELD BUILD 1.18.0</span>
+          <span class="dot">·</span>
+          <span>THREE.JS / WEBGL</span>
+          <span class="footer-spacer"></span>
+          <span>صُمّمت للوحة المفاتيح والماوس واللمس</span>
+        </footer>
+      </section>
+
+      <section class="screen compact-screen lobby-screen" id="lobby" hidden>
+        <div class="compact-panel compact-panel-wide">
+          <header class="compact-head">
+            <div>
+              <p class="kicker">LOBBY / SQUAD HOST</p>
+              <h2>غرفة الانتظار</h2>
+            </div>
+            <button class="icon-btn" id="lobby-close" type="button" aria-label="إغلاق">×</button>
+          </header>
+
+          <div class="lobby-leader">
+            <span class="leader-badge">القائد</span>
+            <b>أنت</b>
+            <small>أنت من يختار الطور والخريطة وعدد البوتات وقوتهم</small>
+          </div>
+
+          <div class="lobby-roster" id="lobby-roster"></div>
+
+          <div class="lobby-grid">
+            <label class="setting">
+              <span><b>الطور</b><small>باتل رويال أو ديث ماتش</small></span>
+              <select id="lobby-mode">
+                <option value="deathmatch">Deathmatch</option>
+                <option value="battleRoyale">Battle Royale</option>
+                <option value="tdm">Team Deathmatch</option>
+                <option value="survival">Survival</option>
+              </select>
+            </label>
+            <label class="setting">
+              <span><b>الخريطة</b><small>5 ساحات</small></span>
+              <select id="lobby-map"></select>
+            </label>
+            <label class="setting">
+              <span><b>عدد البوتات</b><small>1 — 20</small></span>
+              <input id="lobby-bots" type="range" min="1" max="20" step="1" value="5" />
+              <output id="lobby-bots-value">5</output>
+            </label>
+            <label class="setting">
+              <span><b>قوة البوتات</b><small>الدقة والضرر</small></span>
+              <select id="lobby-difficulty">
+                <option value="easy">سهل</option>
+                <option value="normal">عادي</option>
+                <option value="hard">صعب</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="lobby-summary" id="lobby-summary"></div>
+
+          <footer class="compact-foot">
+            <button class="btn btn-primary" id="lobby-start" type="button">ابدأ المباراة</button>
+            <button class="btn btn-quiet" id="lobby-back" type="button">رجوع</button>
+          </footer>
+        </div>
+      </section>
+
+      <section class="screen compact-screen lobby-screen" id="multiplayer" hidden>
+        <div class="compact-panel">
+          <header class="compact-head">
+            <div>
+              <p class="kicker">MULTIPLAYER / ONLINE ROOM</p>
+              <h2>اللعب الجماعي</h2>
+            </div>
+            <button class="icon-btn" id="mp-back-top" type="button" aria-label="إغلاق">×</button>
+          </header>
+
+          <div class="lobby-grid mp-grid">
+            <label class="setting">
+              <span><b>اسم اللاعب</b><small>حتى 16 حرفاً</small></span>
+              <input id="mp-name" maxlength="16" value="Player" autocomplete="nickname" />
+            </label>
+            <label class="setting">
+              <span><b>كود الغرفة</b><small>نفس الكود = نفس المباراة</small></span>
+              <input id="mp-room" maxlength="20" value="arena" autocomplete="off" />
+            </label>
+          </div>
+
+          <div class="lobby-summary" id="mp-status">غير متصل — ادخل غرفة للبدء</div>
+          <div class="lobby-roster" id="mp-roster"></div>
+
+          <div class="mp-chat" id="mp-chat" aria-live="polite"></div>
+          <div class="mp-chat-row">
+            <input id="mp-chat-input" maxlength="120" placeholder="اكتب رسالة..." autocomplete="off" />
+            <button class="btn btn-quiet" id="mp-send" type="button">إرسال</button>
+          </div>
+
+          <footer class="compact-foot">
+            <button class="btn btn-primary" id="mp-connect" type="button">دخول الغرفة</button>
+            <button class="btn btn-quiet" id="mp-back" type="button">رجوع</button>
+          </footer>
+        </div>
+      </section>
+
+      <section class="screen compact-screen" id="how" hidden>
+        <div class="compact-panel">
+          <header class="compact-head">
+            <div>
+              <p class="kicker">FIELD MANUAL</p>
+              <h2>طريقة اللعب</h2>
+            </div>
+            <button class="icon-btn" id="how-close" type="button" aria-label="إغلاق">×</button>
+          </header>
+          <div class="how-grid">
+            <article><span class="how-num">01</span><h3>تحرّك</h3><p>WASD للحركة، Shift للجري، Space للقفز، C أو Ctrl للانخفاض. الحركة السريعة تزيد انتشار التصويب.</p></article>
+            <article><span class="how-num">02</span><h3>صوّب</h3><p>زر الماوس الأيسر للتصويب. زر الماوس الأيمن للتسديد (ADS) يقلل الانتشار ويكبر المدى البصري.</p></article>
+            <article><span class="how-num">03</span><h3>بدّل</h3><p>1—9 أو عجلة الماوس. AR-4 متوازن، SMG-9 وVPR-5 للقريب، DMR-7 وBR-7 للمدى، P-12 مسدس، SR-9 قناصة، LMG-6 دعم، وSG-12 للضربات القريبة.</p></article>
+            <article><span class="how-num">04</span><h3>انجُ</h3><p>الدرع يمتص جزءاً من الضرر. استخدم الحاويات، لا تبقَ في خط واحد، واستمع لمصدر النيران.</p></article>
+          </div>
+          <div class="how-tip">
+            <span class="note-mark">+</span>
+            <p>الهدف: أعلى نقاط قبل نهاية الخمس دقائق. القتلة بالرأس تمنح نقاطاً إضافية. إذا سقطت، تنتهي المهمة.</p>
+          </div>
+          <footer class="compact-foot"><button class="btn btn-primary" id="how-back" type="button">رجوع</button></footer>
+        </div>
+      </section>
+
+      <section class="screen compact-screen" id="modes" hidden>
+        <div class="compact-panel compact-panel-wide">
+          <header class="compact-head">
+             <div><p class="kicker">MISSION SELECT</p><h2>اختر الطور</h2></div>
+            <button class="icon-btn" id="modes-close" type="button" aria-label="إغلاق">×</button>
+          </header>
+          <div class="mode-grid" id="mode-grid"></div>
+          <p class="kicker map-picker-label">اختيار الخريطة</p>
+          <div class="mode-grid map-grid" id="map-grid"></div>
+          <footer class="compact-foot"><button class="btn btn-primary" id="modes-back" type="button">اعتماد والعودة</button></footer>
+        </div>
+      </section>
+
+      <section class="screen compact-screen" id="armory" hidden>
+        <div class="compact-panel compact-panel-wide">
+          <header class="compact-head">
+            <div><p class="kicker">ARMORY / PROGRESSION</p><h2>الترسانة والتطوير</h2><p class="armory-meta" id="profile-meta"></p></div>
+            <button class="icon-btn" id="armory-close" type="button" aria-label="إغلاق">×</button>
+          </header>
+          <div class="operator-grid" id="operator-grid"></div>
+          <div class="loadout-grid" id="loadout-grid"></div>
+          <p class="kicker map-picker-label" style="margin-top: 22px;">تمويهات الأسلحة والمظهر التكتيكي</p>
+          <div class="skins-grid" id="skins-grid"></div>
+          <footer class="compact-foot"><button class="btn btn-primary" id="armory-save" type="button">حفظ التجهيز</button></footer>
+        </div>
+      </section>
+
+      <section class="screen compact-screen" id="store" hidden>
+        <div class="compact-panel compact-panel-wide">
+          <header class="compact-head">
+            <div>
+              <p class="kicker">BLACK MARKET / STORE</p>
+              <h2>متجر العمليات والعتاد</h2>
+              <p class="armory-meta" id="store-meta">رصيدك الحالي: 0 نقطة</p>
+            </div>
+            <button class="icon-btn" id="store-close" type="button" aria-label="إغلاق">×</button>
+          </header>
+
+          <p class="kicker map-picker-label" style="margin-top: 16px;">حزم العمليات الخاصة (Featured Bundles)</p>
+          <div class="store-bundles-grid" id="store-bundles-grid"></div>
+
+          <p class="kicker map-picker-label" style="margin-top: 24px;">تمويهات الأسلحة والمظهر التكتيكي</p>
+          <div class="store-skins-grid" id="store-skins-grid"></div>
+
+          <footer class="compact-foot">
+            <button class="btn btn-primary" id="store-back" type="button">العودة للوبي</button>
+          </footer>
+        </div>
+      </section>
+
+      <section class="screen compact-screen" id="friends" hidden>
+        <div class="compact-panel">
+          <header class="compact-head">
+            <div>
+              <p class="kicker">TACTICAL SQUAD / SOCIAL</p>
+              <h2>الأصدقاء والفريق</h2>
+              <p class="armory-meta">تواصل وادعُ أصدقاءك للساحة المشتركة</p>
+            </div>
+            <button class="icon-btn" id="friends-close" type="button" aria-label="إغلاق">×</button>
+          </header>
+
+          <div class="friends-add-row">
+            <input id="friend-add-input" maxlength="16" placeholder="اكتب اسم الصديق..." autocomplete="off" />
+            <button class="btn btn-primary" id="friend-add-btn" type="button">إضافة</button>
+          </div>
+          <div class="friends-feedback" id="friends-feedback" aria-live="polite"></div>
+
+          <div class="friends-list" id="friends-list"></div>
+
+          <footer class="compact-foot">
+            <button class="btn btn-quiet" id="friends-back" type="button">إغلاق</button>
+          </footer>
+        </div>
+      </section>
+
+      <section class="screen compact-screen" id="progression" hidden>
+        <div class="compact-panel compact-panel-wide">
+          <header class="compact-head">
+            <div>
+              <p class="kicker">SEASON 01 // BATTLE PASS & RANKS</p>
+              <h2>بطاقة المعركة والرتب التكتيكية</h2>
+              <p class="armory-meta" id="pass-meta">المستوى 1 · مستجد · 0 XP</p>
+            </div>
+            <button class="icon-btn" id="progression-close" type="button" aria-label="إغلاق">×</button>
+          </header>
+
+          <div class="pass-header-card">
+            <div class="pass-rank-icon" id="pass-rank-badge">🎖️</div>
+            <div class="pass-rank-details">
+              <h3 id="pass-rank-title">مستجد تكتيكي</h3>
+              <p>حقق الانتصارات والإقصاءات في الأطوار والباتل رويال لرفع رتبتك العسكرية وفتح جوائز الموسم.</p>
+              <div class="pass-level-progress">
+                <span id="pass-xp-label">0 / 1000 XP إلى المستوى التالي</span>
+                <div class="badge-xp-bar"><i id="pass-xp-fill" style="width: 0%;"></i></div>
+              </div>
+            </div>
+          </div>
+
+          <p class="kicker map-picker-label" style="margin-top: 20px;">مسار مكافآت الموسم (Season Pass Tiers)</p>
+          <div class="pass-tiers-track" id="pass-tiers-track"></div>
+
+          <footer class="compact-foot">
+            <button class="btn btn-primary" id="progression-back" type="button">العودة للوبي</button>
+          </footer>
+        </div>
+      </section>
+
+      <section class="screen compact-screen" id="crates" hidden>
+        <div class="compact-panel compact-panel-wide">
+          <header class="compact-head">
+            <div>
+              <p class="kicker">LUCKY CRATES // SUPPLY DROP</p>
+              <h2>صناديق الحظ والعتاد الفاخر</h2>
+              <p class="armory-meta" id="crates-meta">رصيدك الحالي: 0 نقطة</p>
+            </div>
+            <button class="icon-btn" id="crates-close" type="button" aria-label="إغلاق">×</button>
+          </header>
+
+          <p class="kicker map-picker-label" style="margin-top: 16px;">اختر الصندوق (Select Crate)</p>
+          <div class="crates-selector-row" id="crates-selector-row"></div>
+          <div class="crate-display-area" id="crate-display-area"></div>
+          <div class="crate-spin-feedback" id="crate-spin-feedback" hidden></div>
+
+          <footer class="compact-foot">
+            <button class="btn btn-primary" id="crates-back" type="button">العودة للوبي</button>
+          </footer>
+        </div>
+      </section>
+
+      <section class="screen compact-screen" id="gun-lab" hidden>
+        <div class="compact-panel compact-panel-wide">
+          <header class="compact-head">
+            <div>
+              <p class="kicker">GUN LAB // WEAPON WORKSHOP</p>
+              <h2>معمل تطوير الأسلحة (Gun Lab)</h2>
+              <p class="armory-meta" id="lab-meta">قطع التعديل: 0 | الرصيد: 0 نقطة</p>
+            </div>
+            <button class="icon-btn" id="gun-lab-close" type="button" aria-label="إغلاق">×</button>
+          </header>
+
+          <p class="kicker map-picker-label" style="margin-top: 16px;">الأسلحة القابلة للتطوير (Upgradable Weapons)</p>
+          <div class="lab-selector-row" id="lab-selector-row"></div>
+          <div class="lab-workbench" id="lab-workbench"></div>
+
+          <footer class="compact-foot">
+            <button class="btn btn-primary" id="gun-lab-back" type="button">العودة للوبي</button>
+          </footer>
+        </div>
+      </section>
+
+      <section class="screen compact-screen" id="settings" hidden>
+        <div class="compact-panel">
+          <header class="compact-head">
+            <div>
+              <p class="kicker">CONFIG</p>
+              <h2>الإعدادات</h2>
+            </div>
+            <button class="icon-btn" id="settings-close" type="button" aria-label="إغلاق">×</button>
+          </header>
+          <div class="settings-list">
+            <label class="setting">
+              <span><b>حساسية الماوس</b><small>0.4 — 2.0</small></span>
+              <input id="sensitivity" type="range" min="0.4" max="2" step="0.05" value="1" />
+              <output id="sensitivity-value">1.00</output>
+            </label>
+            <label class="setting">
+              <span><b>مجال الرؤية</b><small>FOV</small></span>
+              <input id="fov" type="range" min="70" max="100" step="1" value="80" />
+              <output id="fov-value">80</output>
+            </label>
+            <label class="setting">
+              <span><b>الجودة</b><small>الظلال والأداء</small></span>
+              <select id="quality">
+                <option value="high">عالية</option>
+                <option value="low">منخفضة</option>
+              </select>
+            </label>
+            <label class="setting setting-toggle">
+              <span><b>الصوت</b><small>مؤثرات مولّدة</small></span>
+              <input id="sound" type="checkbox" checked />
+              <i class="switch" aria-hidden="true"></i>
+            </label>
+            <label class="setting setting-toggle">
+              <span><b>عكس المحور الرأسي</b><small>Invert Y</small></span>
+              <input id="invert-y" type="checkbox" />
+              <i class="switch" aria-hidden="true"></i>
+            </label>
+          </div>
+          <footer class="compact-foot">
+            <button class="btn btn-primary" id="settings-save" type="button">حفظ وإغلاق</button>
+            <button class="btn btn-quiet" id="settings-reset" type="button">استعادة الافتراضي</button>
+          </footer>
+        </div>
+      </section>
+
+      <section class="screen compact-screen pause-screen" id="pause" hidden>
+        <div class="compact-panel pause-panel">
+          <p class="kicker">PAUSED</p>
+          <h2>توقّف مؤقت.</h2>
+          <p class="pause-copy">الساحة تنتظر. عد عندما تكون جاهزاً.</p>
+          <div class="pause-actions">
+            <button class="btn btn-primary" id="resume-button" type="button">استئناف</button>
+            <button class="btn btn-quiet" id="pause-settings" type="button">الإعدادات</button>
+            <button class="btn btn-quiet" id="restart-button" type="button">إعادة المباراة</button>
+            <button class="btn btn-quiet danger" id="quit-button" type="button">خروج للقائمة</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen compact-screen gameover-screen" id="gameover" hidden>
+        <div class="compact-panel compact-panel-wide">
+          <p class="kicker">DEBRIEF</p>
+          <h2 id="gameover-title">انتهت المهمة.</h2>
+          <p class="pause-copy" id="gameover-copy">الساحة أغلقت أبوابها. راجع أرقامك.</p>
+          <div class="result-grid">
+            <div><span>النقاط</span><b id="result-score">0000</b></div>
+            <div><span>القتلات</span><b id="result-kills">0</b></div>
+            <div><span>المركز</span><b id="result-placement">—</b></div>
+            <div><span>الدقة</span><b id="result-accuracy">0%</b></div>
+            <div><span>الوقت</span><b id="result-time">00:00</b></div>
+            <div><span>XP المكتسب</span><b id="result-xp">+0</b></div>
+            <div><span>Credits المكتسبة</span><b id="result-credits">+0</b></div>
+          </div>
+          <div class="pause-actions">
+            <button class="btn btn-primary" id="again-button" type="button">مهمة جديدة</button>
+            <button class="btn btn-quiet" id="gameover-menu" type="button">القائمة الرئيسية</button>
+          </div>
+        </div>
+      </section>
+
+      <div class="touch" id="touch-controls" hidden>
+        <div class="touch-stick" id="move-stick"><i id="move-knob"></i><span>حركة</span></div>
+        <div class="touch-look" id="look-zone"></div>
+        <div class="touch-actions">
+          <button class="touch-btn fire" id="touch-fire" type="button">نار</button>
+          <div class="touch-row">
+            <button class="touch-btn" id="touch-ads" type="button">ADS</button>
+            <button class="touch-btn" id="touch-reload" type="button">R</button>
+            <button class="touch-btn" id="touch-jump" type="button">↑</button>
+          </div>
+          <div class="touch-row">
+            <button class="touch-btn" id="touch-crouch" type="button">↓</button>
+            <button class="touch-btn" id="touch-sprint" type="button">⇧</button>
+            <button class="touch-btn" id="touch-switch" type="button">⇄</button>
+          </div>
+          <div class="touch-row">
+            <button class="touch-btn grenade" id="touch-grenade" type="button">G</button>
+            <button class="touch-btn ability" id="touch-ability" type="button">Q</button>
+            <button class="touch-btn" id="touch-melee" type="button">V</button>
+            <button class="touch-btn interact" id="touch-interact" type="button">E</button>
+          </div>
+        </div>
+        <button class="touch-pause" id="touch-pause" type="button" aria-label="إيقاف">II</button>
+      </div>
+
+      <div class="rotate-hint" id="rotate-hint" hidden>أدر الجهاز أفقياً لتجربة أفضل.</div>
+
+      <section class="screen compact-screen fatal-screen" id="fatal" hidden>
+        <div class="compact-panel">
+          <p class="kicker">SYSTEM HALT</p>
+          <h2>تعذّر تشغيل الساحة.</h2>
+          <p class="pause-copy">
+            المتصفح لم يتمكّن من إنشاء سياق WebGL. الأسباب الشائعة: تسريع الرسوميات معطّل، أو تطبيق آخر يستهلك كرت
+            الشاشة، أو متصفح قديم.
+          </p>
+          <ul class="fatal-list">
+            <li>فعّل «استخدام تسريع الرسوميات» من إعدادات المتصفح ثم أعد فتح الصفحة.</li>
+            <li>أغلق تبويبات الألعاب أو التطبيقات الثقيلة الأخرى.</li>
+            <li>جرّب Chrome أو Edge بآخر إصدار.</li>
+          </ul>
+          <div class="fatal-detail" id="fatal-detail" dir="ltr" hidden></div>
+          <div class="pause-actions">
+            <button class="btn btn-primary" id="fatal-retry" type="button">إعادة المحاولة</button>
+            <button class="btn btn-quiet" id="fatal-detail-toggle" type="button">تفاصيل تقنية</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      // Classic bootstrap watchdog: ES modules are blocked on file:// and some
+      // embedded webviews never fire the module at all, leaving the boot screen forever.
+      window.setTimeout(function () {
+        if (window.__GAME_READY__ || window.__GAME_ERROR__) return;
+        var bootText = document.getElementById("boot-text");
+        if (!bootText) return;
+        if (location.protocol === "file:") {
+          bootText.textContent =
+            "اللعبة تحتاج خادماً محلياً. شغّل start.bat ثم افتح http://127.0.0.1:4173";
+        } else {
+          bootText.textContent = "تعذّر تحميل محرك اللعبة. أعد تحميل الصفحة أو جرّب متصفحاً آخر.";
+        }
+      }, 8000);
+    </script>
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>
